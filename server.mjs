@@ -43,6 +43,10 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/api/colors", (_, res) => {
+  res.json({colors});
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -53,10 +57,80 @@ const wss = new WebSocket.Server({
   noServer: true,
 });
 
+const clientsC = new WeakMap();
+const timeouts = new Map([...apiKeys.values()].map((key) => [key, new Date()]));
+
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(data) {
+    const message = JSON.parse(data);
+    switch (message.type){
+      case "put": {
+        const { x, y, color } = message.payload;
+        const key = clientsC.get(ws);
+        const timeout = timeouts.get(key);
+        if ( x < 0 || y < 0 || x >= size || y >= size || !colors.includes(color) || !key || !timeout) break;
+        if (timeout.valueOf() > Date.now()){
+          ws.send(
+            JSON.stringify({
+              type: "timeout",
+              payload: timeout,
+            })
+          );
+          break;
+        }
+        const next = new Date(Date.now() + 15 * 1000);
+        timeouts.set(key, next);
+        ws.send(
+          JSON.stringify({
+            type: "timeout",
+            payload: next,
+          })
+        );
+        place[x + y * size] = color;
+        for(const client of wss.clients){
+          client.send(JSON.stringify(message));
+        }
+        break;
+      }
+      default:
+        console.log(message);
+    }
+  });
+
+  let int = setInterval(() => {
+    ws.send(
+      JSON.stringify({
+        type: "field",
+        payload: place,
+      })
+    );
+  }, 60 * 1000);
+
+  ws.on("close", () => {
+    clearInterval(int);
+  });
+
+  ws.send(
+    JSON.stringify({
+      type: "field",
+      payload: place,
+    })
+  );
+
+  ws.send(
+    JSON.stringify({
+      type: "timeout",
+      payload: timeouts.get((clientsC.get(ws) ?? "") || new Date()),
+    })
+  );
+});
+
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
-  console.log(url);
+  const key = url.searchParams.get("apiKey")
+  if (!apiKeys.has(key)) socket.destroy();
   wss.handleUpgrade(req, socket, head, (ws) => {
+    clientsC.set(ws, key);
     wss.emit("connection", ws, req);
   });
 });
