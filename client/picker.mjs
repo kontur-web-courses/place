@@ -5,7 +5,7 @@ const setAttributes = (element, object) => {
 };
 
 const drawPalette = async () => {
-  const colors = await (await fetch('http://localhost:5000/getPalette')).json();
+  const colors = await (await fetch('https://guarded-ocean-46682.herokuapp.com/getPalette')).json();
   pickedColor = colors[0];
   const palette = document.querySelector("#palette");
   const fragment = document.createDocumentFragment();
