@@ -43,6 +43,11 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+
+app.get('/drawPallete', (req, res) => {
+  res.send(colors);
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -50,7 +55,7 @@ app.get("/*", (_, res) => {
 const server = app.listen(port);
 
 const wss = new WebSocket.Server({
-  noServer: true,
+  noServer: true
 });
 
 server.on("upgrade", (req, socket, head) => {
@@ -60,3 +65,24 @@ server.on("upgrade", (req, socket, head) => {
     wss.emit("connection", ws, req);
   });
 });
+  
+wss.on('connection', function connection(ws) {
+  ws.send(JSON.stringify(place));
+});
+
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(data) {
+    wss.clients.forEach(function each(client) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(data);
+        const point = JSON.parse(data);
+        place[point.y * size + point.x] = point.color;
+      }
+    });
+  });
+});
+
+wss.on('click', (ws) => {
+  const arr = ws.put();
+  console.log(arr);
+})
