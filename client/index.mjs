@@ -19,10 +19,13 @@ const main = apiKey => {
       case 'setPoint':
         drawer.put(data.payload.x, data.payload.y, data.payload.color);
         break;
+      case 'timeout':
+        timeout.next = data.payload.time;
+        break;
     }
   });
 
-  timeout.next = new Date();
+  // timeout.next = new Date();
   drawer.onClick = (x, y) => {
     ws.send(JSON.stringify({
       type: 'setPoint',
