@@ -88,7 +88,7 @@ wss.on('connection', function connection(ws) {
 
 
 server.on('upgrade', (req, socket, head) => {
-    let url = new URL(req.url, peq.headers.origin);
+    let url = new URL(req.url, req.headers.origin);
     let key = url.searchParams.get('apiKey');
     console.log(url);
     if (!apiKeys.has(key))
