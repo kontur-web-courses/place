@@ -18,7 +18,7 @@ window.setInterval(() => {
   );
   if (differenceInSeconds > 0) {
     const timespan = new Date(0, 0, 0, 0, 0, differenceInSeconds);
-    element.innerHTML = timespan.toLocaleTimeString();
+    element.innerHTML = timespan.toLocaleTimeString('RU-ru');
   } else {
     element.innerHTML = "";
   }

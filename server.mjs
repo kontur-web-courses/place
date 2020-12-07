@@ -3,7 +3,8 @@ import express from "express";
 import WebSocket from "ws";
 
 const port = process.env.PORT || 5000;
-
+const wm = new WeakMap();
+const timeoutes = new Map();
 const apiKeys = new Set([
   "4a83051d-aad4-483e-8fc8-693273d15dc7",
   "c08c9038-693d-4669-98cd-9f0dd5ef06bf",
@@ -59,25 +60,49 @@ const wss = new WebSocket.Server({
 
 wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(data) {
-    const point = JSON.parse(data);
-    if (point.x + point.y * size < size*size && place.indexOf(point.color) != -1)
-      place[point.x + point.y * size] = point.color;
-    wss.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(place));
-      }
-    });
+    const clientApikey = wm.get(ws);
+    const res = JSON.parse(data);
+    console.log(res)
+    switch (res.name) {
+      case "point":
+        const clientTimeout = timeoutes.get(clientApikey);
+        if (new Date() < clientTimeout) {
+          wss.clients.forEach(function each(client) {
+            if (client === ws && client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(createReqObject("timeout", clientTimeout)));
+            }
+          });
+        } else {
+          timeoutes.set(clientApikey, new Date(Date.now() + 30 * 1000))
+          let time = new Date(timeoutes.get(clientApikey));
+          ws.send(JSON.stringify(createReqObject("timeout", time.toISOString())))
+          const point = res.data;
+          if (point.x + point.y * size < size * size && place.indexOf(point.color) != -1)
+            place[point.x + point.y * size] = point.color;
+          wss.clients.forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify(createReqObject("point", point)));
+            }
+          });
+        }
+        break;
+    }
   });
   console.log('connected')
-  ws.send(JSON.stringify(place));
+  ws.send(JSON.stringify(createReqObject("map", place)));
 })
 
 
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
-  if(!apiKeys.has(url.searchParams.get('apiKey')))
+  if (!apiKeys.has(url.searchParams.get('apiKey')))
     socket.destroy();
   wss.handleUpgrade(req, socket, head, (ws) => {
+    wm.set(ws, url.searchParams.get('apiKey'))
     wss.emit("connection", ws, req);
   });
 });
+
+function createReqObject(name, data) {
+  return { name: name, data: data };
+}
