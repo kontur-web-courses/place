@@ -43,6 +43,10 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/getPalette", (_, res) => {
+  res.json(colors);
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -53,9 +57,24 @@ const wss = new WebSocket.Server({
   noServer: true,
 });
 
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(data) {
+    const point = JSON.parse(data);
+    if (point.x + point.y * size < size*size && place.indexOf(point.color) != -1)
+      place[point.x + point.y * size] = point.color;
+    wss.clients.forEach(function each(client) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(place));
+      }
+    });
+  });
+  console.log('connected')
+  ws.send(JSON.stringify(place));
+})
+
+
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
-  console.log(url);
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit("connection", ws, req);
   });

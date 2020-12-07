@@ -10,11 +10,11 @@ document.querySelector("#start").addEventListener("submit", e => {
 
 const main = apiKey => {
   const ws = connect(apiKey);
-  ws.addEventListener("message", console.log);
+  ws.addEventListener("message", WebhookHandler);
 
   timeout.next = new Date();
   drawer.onClick = (x, y) => {
-    drawer.put(x, y, picker.color);
+    ws.send(JSON.stringify({x:x, y:y, color:picker.color}));
   };
 };
 
@@ -22,3 +22,10 @@ const connect = apiKey => {
   const url = `${location.origin.replace(/^http/, "ws")}?apiKey=${apiKey}`;
   return new WebSocket(url);
 };
+
+function WebhookHandler(data) {
+  console.log('recived')
+  const recievedData = data.data;
+  const place = JSON.parse(recievedData);
+  drawer.putArray(place);
+}
