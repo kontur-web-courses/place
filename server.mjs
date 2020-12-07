@@ -12,22 +12,22 @@ const apiKeys = new Set([
 ]);
 
 const colors = [
-  "#140c1c",
-  "#442434",
-  "#30346d",
-  "#4e4a4e",
-  "#854c30",
-  "#346524",
-  "#d04648",
-  "#757161",
-  "#597dce",
-  "#d27d2c",
-  "#8595a1",
-  "#6daa2c",
-  "#d2aa99",
-  "#6dc2ca",
-  "#dad45e",
-  "#deeed6",
+  '#140c1c',
+  '#442434',
+  '#30346d',
+  '#4e4a4e',
+  '#854c30',
+  '#346524',
+  '#d04648',
+  '#757161',
+  '#597dce',
+  '#d27d2c',
+  '#8595a1',
+  '#6daa2c',
+  '#d2aa99',
+  '#6dc2ca',
+  '#dad45e',
+  '#deeed6',
 ];
 
 const size = 256;
@@ -43,20 +43,43 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/api/colors", (req, res) => {
+  res.json({ colors: colors });
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
 
 const server = app.listen(port);
 
-const wss = new WebSocket.Server({
-  noServer: true,
+const wss = new WebSocket.Server({ noServer: true });
+
+wss.on('connection', (ws) => {
+  ws.on('message', (data) => {
+    const { type, payload } = JSON.parse(data);
+    if (!(type === 'setPoint'
+      && payload.x >= 0 && payload.x < size
+      && payload.y >= 0 && payload.y < size)) return;
+    place[payload.x + payload.y * size] = payload.color;
+
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(data);
+      }
+    });
+  });
+
+  ws.send(JSON.stringify({
+    type: 'setPlace',
+    payload: place
+  }));
 });
 
-server.on("upgrade", (req, socket, head) => {
+server.on('upgrade', (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
   console.log(url);
   wss.handleUpgrade(req, socket, head, (ws) => {
-    wss.emit("connection", ws, req);
+    wss.emit('connection', ws, req);
   });
 });
