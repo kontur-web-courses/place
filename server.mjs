@@ -86,10 +86,6 @@ wss.on('connection', function connection(ws) {
     }));
 })
 
-server.on("upgrade", (req, socket, head) => {
-
-
-});
 
 server.on('upgrade', (req, socket, head) => {
     let url = new URL(req.url, peq.headers.origin);
@@ -99,7 +95,6 @@ server.on('upgrade', (req, socket, head) => {
         socket.destroy();
 
     wss.handleUpgrade(req, socket, head, (ws) => {
-
         wss.emit("connection", ws, req);
     });
 });
