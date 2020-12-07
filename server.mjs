@@ -43,6 +43,10 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get('/api/colors', (req, res) => {
+  res.json(colors);
+})
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -53,10 +57,45 @@ const wss = new WebSocket.Server({
   noServer: true,
 });
 
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(message) {
+    let res = JSON.parse(message);
+    switch (res.type) {
+      case 'pixel': {
+        let pixel = res.payload;
+        if (pixelCheck(pixel)) {
+          place[pixel.X + pixel.Y * size] = pixel.Color;
+          wss.clients.forEach(function each(client) {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(message);
+            }
+          })
+        }
+      }
+      default:
+        console.log(res);
+    }
+
+    ws.send(JSON.stringify({ type: 'map', payload: place }));
+  })
+});
+
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
   console.log(url);
+  const apiKey = url.searchParams.get('apiKey');
+  if (!apiKeys.has(apiKey)) {
+    socket.destroy();
+  }
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit("connection", ws, req);
   });
 });
+
+const pixelCheck = function (pixel) {
+  if (pixel.X < 0 || pixel.X > size)
+    return false;
+  if (pixel.Y < 0 || pixel.Y > size)
+    return false;
+  return colors.includes(pixel.Color);
+}
