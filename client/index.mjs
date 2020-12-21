@@ -12,15 +12,17 @@ const main = apiKey => {
     const ws = connect(apiKey);
     ws.addEventListener("message", (e) => {
         const data = JSON.parse(e.data);
-        console.log(data)
-        if (data.type === 'getPlace') {
-            drawer.putArray(data.payload);
+        if (data.type === 'startRender') {
+            drawer.putArray(data.payload.place);
+            timeout.next = data.payload.nextTime ? new Date(data.payload.nextTime) : new Date();
         }
         if (data.type === 'setPoint') {
             drawer.put(data.payload.x, data.payload.y, data.payload.color);
         }
+        if (data.type === 'timeout') {
+            timeout.next = new Date(data.payload.nextTime);
+        }
     });
-
     timeout.next = new Date();
     drawer.onClick = (x, y) => {
         ws.send(JSON.stringify({
