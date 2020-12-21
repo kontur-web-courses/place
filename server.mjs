@@ -21,6 +21,8 @@ const timeouts = {
 
 const nextTime = {}
 
+const online = {};
+
 const connects = new WeakMap();
 
 const colors = [
@@ -78,27 +80,10 @@ const wss = new WebSocket.Server({
 
 wss.on('connection', function connection(ws) {
     const key = connects.get(ws);
-    ws.on('message', function incoming(message) {
-        console.log('received: %s', message);
-        const data = JSON.parse(message);
-        if (data.type === 'setPoint' && validatePointData(data.payload)) {
-            if (!(key in nextTime) || nextTime[key] < new Date()) {
-                place[data.payload.y * size + data.payload.x] = data.payload.color;
-                nextTime[key] = new Date(Date.now() + timeouts[key]);
-                wss.clients.forEach(function each(client) {
-                    if (client.readyState === WebSocket.OPEN) {
-                        client.send(message);
-                    }
-                });
-            }
-            ws.send(JSON.stringify({
-                type: 'timeout',
-                payload: {
-                    nextTime: nextTime[key].toISOString(),
-                },
-            }));
-        }
-    });
+    if (!(key in online)) {
+        online[key] = new WeakSet();
+    }
+    online[key].add(ws);
     ws.send(JSON.stringify({
         type: 'startRender',
         payload: {
@@ -106,6 +91,30 @@ wss.on('connection', function connection(ws) {
             nextTime: (key in nextTime ? nextTime[key] : new Date()).toISOString(),
         },
     }));
+    ws.on('message', function incoming(message) {
+        console.log('received: %s', message);
+        const data = JSON.parse(message);
+        if (data.type === 'setPoint' && validatePointData(data.payload)) {
+            if (!(key in nextTime) || nextTime[key] < new Date()) {
+                place[data.payload.y * size + data.payload.x] = data.payload.color;
+                nextTime[key] = new Date(Date.now() + timeouts[key]);
+                const clientsOnline = online[key];
+                wss.clients.forEach(function each(client) {
+                    if (client.readyState === WebSocket.OPEN) {
+                        client.send(message);
+                    }
+                    if (clientsOnline.has(client)) {
+                        client.send(JSON.stringify({
+                            type: 'timeout',
+                            payload: {
+                                nextTime: nextTime[key].toISOString(),
+                            },
+                        }));
+                    }
+                });
+            }
+        }
+    });
 });
 
 server.on("upgrade", (req, socket, head) => {
@@ -119,5 +128,4 @@ server.on("upgrade", (req, socket, head) => {
     } else {
         socket.destroy();
     }
-
 });

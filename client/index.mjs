@@ -12,6 +12,7 @@ const main = apiKey => {
     const ws = connect(apiKey);
     ws.addEventListener("message", (e) => {
         const data = JSON.parse(e.data);
+        console.log(data)
         if (data.type === 'startRender') {
             drawer.putArray(data.payload.place);
             timeout.next = data.payload.nextTime ? new Date(data.payload.nextTime) : new Date();
