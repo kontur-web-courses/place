@@ -1,4 +1,5 @@
 # Place
+# https://hidden-retreat-14303.herokuapp.com/
 
 В задании будем делать свою версию проекта [Place](<https://en.wikipedia.org/wiki/Place_(Reddit)>) размером 256x256
 Клиентский код лежит в папке `/client`, серверный — в файле `server.mjs`

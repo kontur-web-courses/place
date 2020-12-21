@@ -1,3 +1,13 @@
+body.container > h1{
+  position: absolute;
+  top: 70px;
+  grid-area: h;
+}
+
+body.container > h1 > a {
+  visibility: visible;
+}
+
 .container {
   width: 100%;
   max-width: 65rem;
