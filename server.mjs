@@ -30,6 +30,8 @@ const colors = [
   "#deeed6",
 ];
 
+
+
 const size = 256;
 // place(x, y) := place[x + y * size]
 const place = Array(size * size).fill(null);
@@ -43,6 +45,10 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get('/api/colors',(_,res)=>{
+  res.send(colors);
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -53,10 +59,34 @@ const wss = new WebSocket.Server({
   noServer: true,
 });
 
+wss.on("connection", function connection(ws) {
+  ws.on("message", function incoming(message) {
+    console.log("received: %s", message);
+
+    const data = JSON.parse(message).payload;
+    place[data.x + data.y * size] = data.color;
+
+    wss.clients.forEach(function each(client) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({type: 'place',
+                                    payload: place,}));
+      };
+    });
+  });
+
+  ws.send(JSON.stringify({type: 'place',
+                          payload: place,}));
+});
+
+
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
-  console.log(url);
+  let apiKey = url.searchParams.get('apiKey');
+  console.log(url, apiKey);
+  if(apiKeys.has(apiKey)) {
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit("connection", ws, req);
-  });
+  });} else {
+    socket.destroy()
+  }
 });
