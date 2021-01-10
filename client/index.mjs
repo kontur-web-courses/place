@@ -10,11 +10,27 @@ document.querySelector("#start").addEventListener("submit", e => {
 
 const main = apiKey => {
   const ws = connect(apiKey);
-  ws.addEventListener("message", console.log);
+  ws.addEventListener("message", (message) => {
+    const data = JSON.parse(message.data);
+    switch (data.type) {
+      case 'setPlace':
+        drawer.putArray(data.payload);
+        break;
+      case 'setPoint':
+        drawer.put(data.payload.x, data.payload.y, data.payload.color);
+        break;
+      case 'timeout':
+        timeout.next = data.payload.time;
+        break;
+    }
+  });
 
-  timeout.next = new Date();
+  
   drawer.onClick = (x, y) => {
-    drawer.put(x, y, picker.color);
+    ws.send(JSON.stringify({
+      type: 'setPoint',
+      payload: {x, y, color: picker.color}
+    }));
   };
 };
 
