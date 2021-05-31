@@ -22,7 +22,6 @@ const main = apiKey => {
       y: y,
       color: picker.color
     }));
-    drawer.put(x, y, picker.color);
   };
 };
 
