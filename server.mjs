@@ -43,6 +43,10 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/palette", (req, res) => {
+  res.send(colors);
+})
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -57,6 +61,46 @@ server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
   console.log(url);
   wss.handleUpgrade(req, socket, head, (ws) => {
+    console.log(wss.emit);
     wss.emit("connection", ws, req);
   });
 });
+
+function isPutColorMsgCorrect(x, y, color) {
+  return (
+      0 <= x && x < size &&
+      0 <= y && y < size &&
+      colors.includes(color)
+  );
+}
+
+function broadcastPutColor(putColorMsg) {
+  wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(putColorMsg);
+        }
+      });
+}
+
+wss.on('connection', ws => {
+  console.log('Connecting');
+  ws.on('message', msg => {
+    console.log(`Got message: ${msg}`);
+    // чекать правильность типов и наличие полей для зануд
+    const {type, payload} = JSON.parse(msg);
+    if (type === 'putColor') {
+      const {coords, color} = payload;
+      const [x, y] = coords;
+      if (!isPutColorMsgCorrect(x, y, color)) {
+        return;
+      }
+      place[x + y * size] = color;
+      broadcastPutColor(msg);
+    }
+  });
+
+  ws.send(JSON.stringify({
+    type: "place",
+    payload: place
+  }));
+})

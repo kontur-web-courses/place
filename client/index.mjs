@@ -11,10 +11,28 @@ document.querySelector("#start").addEventListener("submit", e => {
 const main = apiKey => {
   const ws = connect(apiKey);
   ws.addEventListener("message", console.log);
+  ws.addEventListener("message", msg => {
+      console.log(msg);
+      const {type, payload} = JSON.parse(msg.data);
+      if (type === 'place') {
+        const place = payload;
+        drawer.putArray(place);
+      }
+      if (type === 'putColor') {
+        const [x, y] = payload.coords;
+        drawer.put(x, y, payload.color);
+    }
+  });
 
   timeout.next = new Date();
   drawer.onClick = (x, y) => {
-    drawer.put(x, y, picker.color);
+    ws.send(JSON.stringify({
+      type: "putColor",
+      payload: {
+        coords: [x, y],
+        color: picker.color
+      }
+    }))
   };
 };
 
