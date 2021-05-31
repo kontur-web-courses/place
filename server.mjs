@@ -43,6 +43,12 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/get_palette", (_, res) => {
+  res.send(JSON.stringify(colors));
+});
+
+//JSON.stringify({ result: colors })
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -51,6 +57,26 @@ const server = app.listen(port);
 
 const wss = new WebSocket.Server({
   noServer: true,
+});
+
+function isInsideField(coordinate) {
+  return coordinate >= 0 && coordinate < size;
+}
+
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(message) {
+    let messageData = JSON.parse(message);
+    if (isInsideField(messageData.x) && isInsideField(messageData.y) && colors.includes(messageData.color)) {
+      place[messageData.x + messageData.y * size] = messageData.color;
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(place));
+        }
+      })
+    }
+  });
+
+  ws.send(JSON.stringify(place));
 });
 
 server.on("upgrade", (req, socket, head) => {

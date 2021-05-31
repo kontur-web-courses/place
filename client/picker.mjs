@@ -1,3 +1,5 @@
+let socket = new WebSocket("ws://localhost:5000");
+
 const setAttributes = (element, object) => {
   for (const [key, value] of Object.entries(object)) {
     element.setAttribute(key, value);
@@ -5,7 +7,18 @@ const setAttributes = (element, object) => {
 };
 
 const drawPalette = async () => {
-  const colors = hardcodedColors;
+  let colorQuery = fetch(`/get_palette`, {})
+    .then(response => { return response.json(); })
+
+    let colors = await colorQuery;
+
+  socket.onopen = () => {
+    socket.send({
+      type: 'sendMap',
+      payload: {}
+    })
+  }
+
   pickedColor = colors[0];
   const palette = document.querySelector("#palette");
   const fragment = document.createDocumentFragment();
@@ -36,17 +49,6 @@ const drawPalette = async () => {
   }
   palette.appendChild(fragment);
 };
-
-const hardcodedColors = [
-  "#140c1c",
-  "#30346d",
-  "#854c30",
-  "#d04648",
-  "#597dce",
-  "#8595a1",
-  "#d2aa99",
-  "#dad45e",
-];
 
 let pickedColor = null;
 
