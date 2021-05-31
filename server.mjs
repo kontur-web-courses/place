@@ -59,13 +59,13 @@ wss.on('connection', function connection(ws) {
         console.log('received: %s', message);
     });
 
-    ws.send('что-то');
+    ws.send(JSON.stringify(place));
 });
 
-// server.on("upgrade", (req, socket, head) => {
-//     const url = new URL(req.url, req.headers.origin);
-//     console.log(url);
-//     wss.handleUpgrade(req, socket, head, (ws) => {
-//         wss.emit("connection", ws, req);
-//     });
-// });
+server.on("upgrade", (req, socket, head) => {
+    const url = new URL(req.url, req.headers.origin);
+    console.log(url);
+    wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+    });
+});
