@@ -60,9 +60,10 @@ const wss = new WebSocket.Server({
 });
 
 wss.on("connection", (ws) => {
-  // ws.on('message', function incoming(message) {
-  //   console.log('received: %s', message);
-  // });
+  ws.on('message', function incoming(message) {
+    const data = JSON.parse(message);
+    place[data.x + data.y * size] = data.color;
+  });
 
   ws.send(JSON.stringify(place));
 });

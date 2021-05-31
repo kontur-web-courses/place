@@ -17,6 +17,11 @@ const main = apiKey => {
 
   timeout.next = new Date();
   drawer.onClick = (x, y) => {
+    ws.send(JSON.stringify({
+      x: x,
+      y: y,
+      color: picker.color
+    }));
     drawer.put(x, y, picker.color);
   };
 };
