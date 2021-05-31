@@ -10,11 +10,25 @@ document.querySelector("#start").addEventListener("submit", e => {
 
 const main = apiKey => {
   const ws = connect(apiKey);
-  ws.addEventListener("message", console.log);
+  ws.addEventListener("message", (message => {
+    const data = JSON.parse(message.data);
+
+    if (data.type === "states") {
+      drawer.putArray(data.payload);
+    }
+    else if (data.type === "setColor") {
+      drawer.putArray(data.payload);
+    }
+  }));
 
   timeout.next = new Date();
   drawer.onClick = (x, y) => {
-    drawer.put(x, y, picker.color);
+    // drawer.put(x, y, picker.color);
+
+    ws.send(JSON.stringify({
+      type: "setColor",
+      payload: {x, y, color: picker.color}
+    }));
   };
 };
 

@@ -1,6 +1,7 @@
 import * as path from "path";
 import express from "express";
 import WebSocket from "ws";
+import picker from "./client/picker.mjs";
 
 const port = process.env.PORT || 5000;
 
@@ -43,15 +44,45 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/colors", (_, res) => {
+  res.send(JSON.stringify(colors));
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
 
+
 const server = app.listen(port);
 
-const wss = new WebSocket.Server({
-  noServer: true,
+const wss = new WebSocket.Server({ noServer: true });
+
+wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
+
+    const data = JSON.parse(message);
+    if (data.payload.x >= 0 && data.payload.y >= 0 &&
+        data.payload.y < size && data.payload.x < size) {
+      place[data.payload.x + data.payload.y * size] = data.payload.color;
+    }
+
+    wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({type: "states", payload: place}));
+        }
+    });
+
+  });
+
+  ws.send(JSON.stringify({
+    type: "states",
+    payload: place
+  }));
+
+  // ws.send('something');
 });
+
 
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);

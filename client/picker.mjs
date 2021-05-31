@@ -4,8 +4,14 @@ const setAttributes = (element, object) => {
   }
 };
 
+async function reqColors() {
+  return await fetch('/colors')
+      .then(r => r.json())
+      .catch((data) => console.log(data));
+}
+
 const drawPalette = async () => {
-  const colors = hardcodedColors;
+  const colors = await reqColors();
   pickedColor = colors[0];
   const palette = document.querySelector("#palette");
   const fragment = document.createDocumentFragment();
@@ -35,9 +41,10 @@ const drawPalette = async () => {
     fragment.appendChild(label);
   }
   palette.appendChild(fragment);
+
 };
 
-const hardcodedColors = [
+/*const hardcodedColors = [
   "#140c1c",
   "#30346d",
   "#854c30",
@@ -46,7 +53,7 @@ const hardcodedColors = [
   "#8595a1",
   "#d2aa99",
   "#dad45e",
-];
+];*/
 
 let pickedColor = null;
 
