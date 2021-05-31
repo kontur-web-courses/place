@@ -43,9 +43,15 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/colors", (_, res) => {
+  res.send(JSON.stringify(colors));
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
+
+
 
 const server = app.listen(port);
 
