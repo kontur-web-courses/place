@@ -5,9 +5,10 @@ const setAttributes = (element, object) => {
 };
 
 const drawPalette = async () => {
-  //const colors = hardcodedColors;
+  // const colors = hardcodedColors;
+  // console.log(colors);
   let response = await fetch('/colors');
-  const colors = (await response.json())[0];
+  const colors = (await response.json());
   pickedColor = colors[0];
   const palette = document.querySelector("#palette");
   const fragment = document.createDocumentFragment();
