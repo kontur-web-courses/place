@@ -56,7 +56,15 @@ app.get("/*", (_, res) => {
 const server = app.listen(port);
 
 const wss = new WebSocket.Server({
-  noServer: true,
+  noServer: true
+});
+
+wss.on("connection", (ws) => {
+  ws.on('message', function incoming(message) {
+    console.log('received: %s', message);
+  });
+
+  ws.send(JSON.stringify(place));
 });
 
 server.on("upgrade", (req, socket, head) => {
