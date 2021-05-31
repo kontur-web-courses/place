@@ -62,7 +62,19 @@ const wss = new WebSocket.Server({
 wss.on("connection", (ws) => {
   ws.on('message', function incoming(message) {
     const data = JSON.parse(message);
-    place[data.x + data.y * size] = data.color;
+    if (data.x >= 0 
+      && data.y >= 0 
+      && data.x < size
+      && data.y < size
+      && colors.includes(data.color)) {
+      place[data.x + data.y * size] = data.color;
+
+      wss.clients.forEach(function each(client) {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(place);
+        }
+      });
+    }      
   });
 
   ws.send(JSON.stringify(place));
