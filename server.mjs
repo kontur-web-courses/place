@@ -43,6 +43,10 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get("/colors", (req, res)=>{
+  res.send(colors);
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -60,3 +64,4 @@ server.on("upgrade", (req, socket, head) => {
     wss.emit("connection", ws, req);
   });
 });
+
