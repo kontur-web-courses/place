@@ -3,22 +3,29 @@ import drawer from "./drawer.mjs";
 import picker from "./picker.mjs";
 
 document.querySelector("#start").addEventListener("submit", e => {
-  e.preventDefault();
-  main(new FormData(e.currentTarget).get("apiKey"));
-  document.querySelector(".container").classList.add("ready");
+    e.preventDefault();
+    main(new FormData(e.currentTarget).get("apiKey"));
+    document.querySelector(".container").classList.add("ready");
 });
 
 const main = apiKey => {
-  const ws = connect(apiKey);
-  ws.addEventListener("message", console.log);
+    const ws = connect(apiKey);
+    ws.addEventListener("message", (message) => {
+        const data = JSON.parse(message.data);
+        if (data.type === 'setPlace') {
+            drawer.putArray(data.payload);
+        } else if (data.type === 'setPoint') {
+            drawer.put(data.payload.x, data.payload.y, data.payload.color);
+        }
+    });
 
-  timeout.next = new Date();
-  drawer.onClick = (x, y) => {
-    drawer.put(x, y, picker.color);
-  };
+    timeout.next = new Date();
+    drawer.onClick = (x, y) => {
+        ws.send(JSON.stringify({type: 'setPoint', payload: {x, y, color: picker.color}}));
+    };
 };
 
 const connect = apiKey => {
-  const url = `${location.origin.replace(/^http/, "ws")}?apiKey=${apiKey}`;
-  return new WebSocket(url);
+    const url = `${location.origin.replace(/^http/, "ws")}?apiKey=${apiKey}`;
+    return new WebSocket(url);
 };
