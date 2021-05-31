@@ -5,7 +5,10 @@ const setAttributes = (element, object) => {
 };
 
 const drawPalette = async () => {
-  const colors = hardcodedColors;
+  // const colors = hardcodedColors;
+  // var clientSock = new WebSocket("wss://www.example.com/socketserver", "protocolOne");
+  var cols = await fetch("http://localhost:5000/colors").then(req => req.json());
+  const colors = cols;
   pickedColor = colors[0];
   const palette = document.querySelector("#palette");
   const fragment = document.createDocumentFragment();
