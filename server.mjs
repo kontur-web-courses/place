@@ -54,10 +54,18 @@ const wss = new WebSocket.Server({
     noServer: true,
 });
 
-server.on("upgrade", (req, socket, head) => {
-    const url = new URL(req.url, req.headers.origin);
-    console.log(url);
-    wss.handleUpgrade(req, socket, head, (ws) => {
-        wss.emit("connection", ws, req);
+wss.on('connection', function connection(ws) {
+    ws.on('message', function incoming(message) {
+        console.log('received: %s', message);
     });
+
+    ws.send('что-то');
 });
+
+// server.on("upgrade", (req, socket, head) => {
+//     const url = new URL(req.url, req.headers.origin);
+//     console.log(url);
+//     wss.handleUpgrade(req, socket, head, (ws) => {
+//         wss.emit("connection", ws, req);
+//     });
+// });
