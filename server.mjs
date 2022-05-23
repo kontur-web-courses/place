@@ -40,6 +40,7 @@ for (const [colorIndex, colorValue] of colors.entries()) {
 }
 
 const app = express();
+app.get("/colors", (_, res) => { res.send(JSON.stringify(colors)); });
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
