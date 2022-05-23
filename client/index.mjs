@@ -10,7 +10,11 @@ document.querySelector("#start").addEventListener("submit", e => {
 
 const main = apiKey => {
   const ws = connect(apiKey);
-  ws.addEventListener("message", console.log);
+  ws.addEventListener("message", (res) => {
+    let data = JSON.parse(res.data);
+    console.log(data);
+    drawer.putArray(data.payload);
+  });
 
   timeout.next = new Date();
   drawer.onClick = (x, y) => {
