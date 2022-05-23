@@ -43,6 +43,11 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+
+app.get('/api/colors', (req, res) => {
+  res.send(colors);
+});
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
