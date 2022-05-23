@@ -66,9 +66,16 @@ server.on("upgrade", (req, socket, head) => {
 });
 
 wss.on('connection', function connection(ws) {
-    // ws.on('message', function message(data) {
-    //   console.log('received: %s', data);
-    // });
-    //
+    ws.on('message', function message(res) {
+        let data = JSON.parse(res);
+        if (!(0 <= data.payload.x < size && 0 <= data.payload.y < size && colors.some(c => c === data.payload.color))) return;
+        place[data.payload.x + data.payload.y * size] = data.payload.color;
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(res);
+            }
+        });
+    });
+
     ws.send(JSON.stringify({type: "fieldStatus", payload: place}));
 });
