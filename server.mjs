@@ -57,7 +57,10 @@ wss.on('connection', function connection(ws) {
   ws.on('message', function message(data) {
     console.log('received: %s', data);
   });
-  ws.send('something');
+  ws.send(JSON.stringify({
+    type: "place",
+    payload: place
+  }));
 });
 
 server.on("upgrade", (req, socket, head) => {
