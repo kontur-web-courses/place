@@ -1,6 +1,8 @@
 import * as path from "path";
 import express from "express";
 import WebSocket from "ws";
+//import timeout from "./client/timeout.mjs";
+
 
 const port = process.env.PORT || 5000;
 
@@ -42,6 +44,12 @@ for (const [colorIndex, colorValue] of colors.entries()) {
 const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
+
+
+app.get("/palette", (req, res) => {
+    res.send(JSON.stringify(colors));
+})
+
 
 app.get("/*", (_, res) => {
   res.send("Place(holder)");

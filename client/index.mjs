@@ -12,10 +12,17 @@ const main = apiKey => {
   const ws = connect(apiKey);
   ws.addEventListener("message", console.log);
 
-  timeout.next = new Date();
-  drawer.onClick = (x, y) => {
-    drawer.put(x, y, picker.color);
-  };
+    timeout.next = new Date();
+    drawer.onClick = (x, y) => {
+        //drawer.put(x, y, picker.color);
+        ws.send(JSON.stringify({
+            type: "putColor",
+            payload: {
+                coords: [x, y],
+                color: picker.color
+            }
+        }));
+    };
 };
 
 const connect = apiKey => {
