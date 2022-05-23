@@ -40,7 +40,7 @@ for (const [colorIndex, colorValue] of colors.entries()) {
 }
 
 const app = express();
-app.get("/colors", (_, res) => { res.send(JSON.stringify(colors)); });
+app.get("/colors", (request, response) => { response.send(JSON.stringify(colors)); });
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
@@ -52,6 +52,12 @@ const server = app.listen(port);
 
 const wss = new WebSocket.Server({
   noServer: true,
+});
+wss.on('connection', function connection(ws) {
+  ws.on('message', function message(data) {
+    console.log('received: %s', data);
+  });
+  ws.send('something');
 });
 
 server.on("upgrade", (req, socket, head) => {
