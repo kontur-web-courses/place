@@ -15,11 +15,13 @@ const main = apiKey => {
         console.log(data);
         if (data.type === "fieldStatus")
             drawer.putArray(data.payload);
+        if (data.type === 'put')
+            drawer.put(data.payload.x, data.payload.y, data.payload.color);
     });
 
     timeout.next = new Date();
     drawer.onClick = (x, y) => {
-        drawer.put(x, y, picker.color);
+        // drawer.put(x, y, picker.color);
         ws.send(JSON.stringify({type: "put", payload: {x: x, y: y, color: picker.color}}));
     };
 };
