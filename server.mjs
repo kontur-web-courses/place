@@ -58,7 +58,7 @@ wss.on('connection', function connection(ws) {
     console.log('received: %s', data);
   });
   ws.send(JSON.stringify({
-    type: "place",
+    type: "states",
     payload: place
   }));
 });
