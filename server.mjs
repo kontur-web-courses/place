@@ -30,6 +30,8 @@ const colors = [
   "#deeed6",
 ];
 
+const colorsSet = new Set(colors);
+
 const size = 256;
 // place(x, y) := place[x + y * size]
 const place = Array(size * size).fill(null);
@@ -43,6 +45,9 @@ const app = express();
 
 app.use(express.static(path.join(process.cwd(), "client")));
 
+app.get('/api/colors', (req, res) =>
+    res.json({'colors': colors}));
+
 app.get("/*", (_, res) => {
   res.send("Place(holder)");
 });
@@ -52,6 +57,36 @@ const server = app.listen(port);
 const wss = new WebSocket.Server({
   noServer: true,
 });
+
+function getCurrentState(){
+  return {
+    type: "place",
+    payload: {
+      place: place
+    }
+  };
+}
+
+wss.on('connection', (ws) => {
+  ws.send(JSON.stringify(getCurrentState()));
+  ws.onmessage = function(event) {
+    const deserializedData = JSON.parse(event.data);
+    const {x, y, color} = deserializedData.payload;
+    if (!validateData(x, y, color)){
+      return;
+    }
+    place[x + y * size] = color;
+    for (const client of wss.clients) {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify(deserializedData));
+      }
+    }
+  };
+});
+
+function validateData(x, y, color) {
+  return x >= 0 && x < size && y >= 0 && y < size && colorsSet.has(color);
+}
 
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
