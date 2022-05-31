@@ -91,6 +91,11 @@ function validateData(x, y, color) {
 server.on("upgrade", (req, socket, head) => {
   const url = new URL(req.url, req.headers.origin);
   console.log(url);
+  const apiKey = url.searchParams.get('apiKey');
+  if (!apiKeys.has(apiKey)){
+    socket.destroy(Error('wrong api-key'));
+    return;
+  }
   wss.handleUpgrade(req, socket, head, (ws) => {
     wss.emit("connection", ws, req);
   });

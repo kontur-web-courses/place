@@ -34,7 +34,6 @@ function messageHandler(message) {
   }
   else {
     const {x, y, color} = deserializedData.payload;
-    console.log(x, y, color)
     drawer.put(x, y, color);
   }
 }
